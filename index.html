@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Game Pro</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI';}
+
+body{
+    color:white;
+    text-align:center;
+    background:url("https://img.freepik.com/premium-photo/2d-cave-rock-background-environment-battle-arena-mobile-game-generative-ai_742252-13438.jpg?w=900")
+    no-repeat center/cover;
+    overflow:hidden;
+}
+
+/* 🔥 FIRE LIGHTS */
+.fire{
+position:fixed;
+width:140px;
+height:140px;
+background:radial-gradient(circle, rgba(255,140,0,0.9), transparent 70%);
+filter:blur(18px);
+opacity:0.8;
+animation:flicker 2s infinite alternate;
+z-index:0;
+pointer-events:none;
+}
+.fire.left{left:15px;bottom:15px;}
+.fire.right{right:15px;bottom:15px;}
+
+@keyframes flicker{
+0%{transform:scale(1);opacity:0.5;}
+50%{transform:scale(1.4);opacity:1;}
+100%{transform:scale(1);opacity:0.7;}
+}
+
+/* GLASS TITLE */
+.glass-title{
+    font-size:42px;
+    padding:15px 30px;
+    border-radius:15px;
+    background:rgba(255,255,255,0.1);
+    backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,0.25);
+    transition:0.4s;
+    letter-spacing:2px;
+}
+.glass-title:hover{
+    transform:scale(1.08);
+    box-shadow:0 0 25px #38bdf8,0 0 60px rgba(56,189,248,0.4);
+}
+
+/* BUTTON */
+button{
+    padding:10px 18px;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    color:white;
+    background:rgba(255,255,255,0.1);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,0.2);
+    transition:0.3s;
+}
+button:hover{
+    transform:scale(1.1);
+    box-shadow:0 0 15px #38bdf8,0 0 40px rgba(56,189,248,0.5);
+    background:rgba(56,189,248,0.3);
+}
+
+/* SCREENS */
+.start-screen{
+height:100vh;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+gap:20px;
+}
+
+/* LEVELS */
+.level-btn{
+width:70px;height:70px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+background:rgba(255,255,255,0.1);
+cursor:pointer;
+transition:0.3s;
+}
+.level-btn:hover{
+transform:scale(1.2);
+box-shadow:0 0 15px gold;
+}
+
+/* GAME */
+.game-wrapper{
+margin:20px auto;
+padding:20px;
+background:rgba(0,0,0,0.6);
+border-radius:15px;
+width:fit-content;
+}
+
+.board{
+display:grid;
+gap:15px;
+justify-content:center;
+margin-top:15px;
+position:relative;
+z-index:2;
+}
+
+/* CARDS */
+.card{
+width:90px;height:110px;
+perspective:1000px;
+}
+
+.inner{
+width:100%;height:100%;
+transition:0.6s;
+transform-style:preserve-3d;
+}
+
+.card.flip .inner{transform:rotateY(180deg);}
+
+.front,.back{
+position:absolute;
+width:100%;height:100%;
+border-radius:12px;
+display:flex;
+justify-content:center;
+align-items:center;
+font-size:32px;
+backface-visibility:hidden;
+}
+
+.front{background:rgba(255,255,255,0.2);}
+.back{background:#38bdf8;transform:rotateY(180deg);}
+
+/* WIN */
+.win-overlay{
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+display:none;
+justify-content:center;
+align-items:center;
+z-index:10;
+}
+
+.win-box{
+padding:30px;
+background:rgba(0,0,0,0.85);
+border-radius:15px;
+}
+
+/* 🌟 SPRINKLES (FIXED VISIBILITY) */
+.sprinkle{
+position:fixed;
+top:-10px;
+width:6px;height:6px;
+border-radius:50%;
+background:radial-gradient(circle,#7dd3fc,#38bdf8,transparent);
+animation:fall 3s linear forwards;
+pointer-events:none;
+z-index:1;
+}
+
+@keyframes fall{
+to{
+transform:translateY(110vh) translateX(20px);
+opacity:0;
+}
+}
+
+/* STAR */
+.star{
+position:fixed;
+width:2px;height:2px;
+background:#7dd3fc;
+border-radius:50%;
+animation:twinkle 2s infinite;
+pointer-events:none;
+}
+
+@keyframes twinkle{
+50%{opacity:1;transform:scale(1.5);}
+}
+
+/* CURSOR */
+.cursor-sparkle{
+position:fixed;
+width:6px;height:6px;
+background:#38bdf8;
+border-radius:50%;
+pointer-events:none;
+animation:fadeOut 0.8s forwards;
+}
+
+@keyframes fadeOut{
+to{opacity:0;transform:scale(0.3);}
+}
+
+/* 🎉 PAPER CONFETTI (ENHANCED) */
+.confetti{
+position:fixed;
+top:-10px;
+width:10px;
+height:14px;
+opacity:0.9;
+animation:fall2 linear forwards;
+z-index:999;
+border-radius:2px;
+}
+
+@keyframes fall2{
+to{
+transform:translateY(110vh) rotate(720deg);
+opacity:0;
+}
+}
+</style>
+</head>
+
+<body>
+
+<div class="fire left"></div>
+<div class="fire right"></div>
+
+<!-- START -->
+<div id="startScreen" class="start-screen">
+<h1 class="glass-title">🧠 Memory Game</h1>
+<button onclick="showLevels()">✨ Play</button>
+</div>
+
+<!-- LEVEL -->
+<div id="levelScreen" class="start-screen" style="display:none;">
+<h2 class="glass-title">🗺️ Select Level 🎮</h2>
+<div id="levelsContainer" style="display:flex;gap:10px;"></div>
+<button onclick="goHome()">⬅ Back</button>
+</div>
+
+<!-- GAME -->
+<div id="gameScreen" style="display:none;">
+<div>
+Moves: <span id="moves">0</span>
+Time: <span id="time">0</span>
+<button onclick="togglePause()">Pause</button>
+
+</div>
+
+<div id="board" class="board"></div>
+</div>
+
+<!-- WIN -->
+<div id="winScreen" class="win-overlay">
+<div class="win-box">
+<h1>🎉 You Win</h1>
+<p id="scoreText"></p>
+<button onclick="restartGame()">Play Again</button>
+<button onclick="exitGame()">Exit</button>
+</div>
+</div>
+
+<audio id="bgMusic" loop>
+<source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9b6b8f.mp3">
+</audio>
+
+<script>
+const emojis=['🍎','🍌','🍇','🍓','🍍','🥝','🍒','🍉'];
+
+let flipped=[],moves=0,time=0,timer;
+let paused=false,sound=true;
+let matched=0,totalPairs=0;
+
+const music=document.getElementById("bgMusic");
+const startScreen=document.getElementById("startScreen");
+const levelScreen=document.getElementById("levelScreen");
+const gameScreen=document.getElementById("gameScreen");
+const winScreen=document.getElementById("winScreen");
+const board=document.getElementById("board");
+const timeEl=document.getElementById("time");
+const levelsContainer=document.getElementById("levelsContainer");
+
+/* SPRINKLES */
+setInterval(()=>{
+let s=document.createElement("div");
+s.className="sprinkle";
+s.style.left=Math.random()*100+"vw";
+document.body.appendChild(s);
+setTimeout(()=>s.remove(),4000);
+},80);
+
+/* STARS */
+for(let i=0;i<60;i++){
+let st=document.createElement("div");
+st.className="star";
+st.style.left=Math.random()*100+"vw";
+st.style.top=Math.random()*100+"vh";
+document.body.appendChild(st);
+}
+
+/* CURSOR */
+document.addEventListener("mousemove",(e)=>{
+let c=document.createElement("div");
+c.className="cursor-sparkle";
+c.style.left=e.clientX+"px";
+c.style.top=e.clientY+"px";
+document.body.appendChild(c);
+setTimeout(()=>c.remove(),800);
+});
+
+/* LEVELS */
+function showLevels(){
+startScreen.style.display="none";
+levelScreen.style.display="flex";
+levelsContainer.innerHTML="";
+for(let i=1;i<=10;i++){
+let b=document.createElement("div");
+b.className="level-btn";
+b.innerText="🎮 "+i;
+b.onclick=()=>startGame();
+levelsContainer.appendChild(b);
+}
+}
+
+function goHome(){
+levelScreen.style.display="none";
+startScreen.style.display="flex";
+}
+
+/* GAME */
+function startGame(){
+gameScreen.style.display="block";
+levelScreen.style.display="none";
+
+moves=0;time=0;matched=0;flipped=[];
+document.getElementById("moves").innerText=0;
+timeEl.innerText=0;
+
+/* FIXED MUSIC */
+if(sound){
+music.volume=0.5;
+music.play().catch(()=>{});
+}
+
+clearInterval(timer);
+timer=setInterval(()=>{
+if(!paused){
+time++;
+timeEl.innerText=time;
+}
+},1000);
+
+let count=8;
+totalPairs=count/2;
+
+let cards=[...emojis.slice(0,totalPairs),...emojis.slice(0,totalPairs)]
+.sort(()=>Math.random()-0.5);
+
+board.innerHTML="";
+board.style.gridTemplateColumns=`repeat(${totalPairs},90px)`;
+
+cards.forEach(v=>{
+let c=document.createElement("div");
+c.className="card";
+c.innerHTML=`<div class="inner">
+<div class="front">❓</div>
+<div class="back">${v}</div>
+</div>`;
+c.onclick=()=>!paused&&flip(c,v);
+board.appendChild(c);
+});
+}
+
+/* PAUSE + SOUND */
+function togglePause(){paused=!paused;}
+function toggleSound(){
+sound=!sound;
+if(sound) music.play();
+else music.pause();
+}
+
+/* FLIP */
+function flip(card,val){
+if(card.classList.contains("flip")||flipped.length===2)return;
+card.classList.add("flip");
+flipped.push({card,val});
+
+if(flipped.length===2){
+moves++;
+document.getElementById("moves").innerText=moves;
+
+if(flipped[0].val===flipped[1].val){
+setTimeout(()=>{
+flipped.forEach(c=>c.card.style.visibility="hidden");
+flipped=[];
+matched++;
+if(matched===totalPairs) win();
+},300);
+}else{
+setTimeout(()=>{
+flipped.forEach(c=>c.card.classList.remove("flip"));
+flipped=[];
+},700);
+}
+}
+}
+
+/* WIN */
+function win(){
+clearInterval(timer);
+music.pause();
+
+let score=Math.max(0,1000-(moves*10+time*5));
+
+document.getElementById("scoreText").innerHTML=
+`Score: ${score}<br>Time: ${time}<br>Moves: ${moves}`;
+
+launchConfetti();
+winScreen.style.display="flex";
+}
+
+/* 🎉 PAPER CONFETTI FIX */
+function launchConfetti(){
+for(let i=0;i<160;i++){
+let c=document.createElement("div");
+c.className="confetti";
+c.style.left=Math.random()*100+"vw";
+c.style.background=["#fff","#38bdf8","#7dd3fc","#ffd700"][Math.floor(Math.random()*4)];
+c.style.width=(Math.random()*8+6)+"px";
+c.style.height=(Math.random()*14+8)+"px";
+c.style.animationDuration=(Math.random()*3+2)+"s";
+document.body.appendChild(c);
+setTimeout(()=>c.remove(),4500);
+}
+}
+
+function restartGame(){winScreen.style.display="none";startGame();}
+function exitGame(){winScreen.style.display="none";gameScreen.style.display="none";startScreen.style.display="flex";music.pause();}
+</script>
+
+</body>
+</html>
